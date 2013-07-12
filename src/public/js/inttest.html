@@ -1,0 +1,32 @@
+<html>
+<head>
+  <title>int test</title>
+  </head>
+<body>
+  <script type="text/javascript">
+    var numberString = "12345678901234567890";
+    console.log("'12345678901234567890' typeof: " + typeof numberString); // string
+    
+    var numString = "5";
+    console.log("'5' typeof: " + typeof numString); // string
+    
+    var num = 12345678;
+    console.log("12345678 typeof: " + typeof num); // number
+    
+    var dec = 1234.5678;
+    console.log("1234.5678 typeof: " + typeof dec); // number
+    
+    console.log("'12345678901234567890' * 10 typeof: " + (typeof(numberString * 10))); // number
+    console.log("'5' * 10 typeof: " + (typeof(numString * 10))); // number
+    console.log("12345678 * 10 typeof: " + (typeof(num * 10))); // number
+    console.log("1234.5678 * 10 typeof: " + (typeof(dec * 10))); // number
+    
+    console.log("'12345678901234567890' * 10.2 typeof: " + (typeof(numberString * 10.2))); // number
+    console.log("'5' * 10.2 typeof: " + (typeof(numString * 10.2))); // number
+    console.log("12345678 * 10.2 typeof: " + (typeof(num * 10.2))); // number
+    console.log("1234.5678 * 10.2 typeof: " + (typeof(dec * 10.2))); // number
+    
+  </script>
+  
+</body>
+</html>

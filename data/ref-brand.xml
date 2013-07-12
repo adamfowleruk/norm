@@ -1,0 +1,7 @@
+xquery version "1.0-ml";
+
+xdmp:document-insert("/brand/b1.xml",
+<brand series-pid="series1" pid="b1">
+ <name>BBC2</name>
+</brand>
+,xdmp:default-permissions(),"brand")

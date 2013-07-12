@@ -1,0 +1,29 @@
+xquery version "1.0-ml";
+
+xdmp:document-insert("/odbc/biggie.xml",
+<order id="order1">
+  <deliveryaddress>1 Paddington Way, London</deliveryaddress>
+  <orderitem>
+    <code>item1</code>
+    <quantity>50</quantity>
+  </orderitem>
+  <orderitem>
+    <code>item2</code>
+    <quantity>4</quantity>
+  </orderitem>
+</order>
+,xdmp:default-permissions(),"odbc")
+
+(:
+ : NB The ODBC connector view would resolve indexes on order/@id, code and quantity as these results:-
+ : order1 : item1 : 50
+ : order1 : item1 : 4
+ : order1 : item2 : 50
+ : order1 : item2 : 4
+ :
+ : Rather than:-
+ : order1 : item1 : 50
+ : order1 : item2 : 4
+ :
+ : Thus requiring a denormalisation to tell MarkLogic of the correct co-occurence in a single document
+ :)

@@ -1,0 +1,8 @@
+xquery version "1.0-ml";
+
+xdmp:document-insert("/availabilities/2.xml",
+<availability episode-pid="1234">
+ <start-time>2013-07-21T21:30</start-time>
+ <end-time>2013-07-21T22:13</end-time>
+</availability>
+,xdmp:default-permissions(),"availabilities")
