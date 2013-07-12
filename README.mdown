@@ -1,89 +1,53 @@
-# Roxy
-Roxy (RObust XQuerY Framework) is a lightweight framework for quickly developing well-structured, easily maintained XQuery applications. Roxy was heavily inspired by Ruby On Rails and CakePHP.
+# Norm
+Norm is a MarkLogic Denormalisation helper library. A Denormalisation in MarkLogic allows you to alter the structure of multiple incoming documents and create composite documents 
+to act as the results of a search application. Scenarios supported include:-
 
-## Getting Help
-To get help with Roxy, 
+- Shredding one incoming document in to several document (Also useful for creating documents to act as fragments for ODBC views)
+- Combining multiple related documents in to a single aggregate document (E.g. from Relational documents for an Order, Order items, delivery address in to a single OrderDetails document)
 
-* Subscribe to the [Roxy mailing list](http://developer.marklogic.com/mailman/listinfo/roxy)
-* Read up on [the wiki](https://github.com/marklogic/roxy/wiki)
-* Check out the [Tutorials page](https://github.com/marklogic/roxy/wiki/Tutorials)
+## Installation
+Currently there is no UI. To install to a target content database:-
 
-## Components
-### Roxy Deployer
-Roxy Deployer makes managing MarkLogic application easy. Simply edit a few configuration files and you have full access to create and deploy applications to MarkLogic servers, local or remote. Roxy Deployer is written in Ruby and is easily extended to add additional functionality.
+- Copy /src/app/models/lib-norm.xqy to your modules database at /app/models/lib-norm.xqy
+- Added the trigger /src/app/models/trigger-norm-create.xqy at the same folder location in the modules database
+- Enabled this trigger on one or more incoming document collections, or globally (there are internal checks to ensure it works globally)
+- Add a denormalisation configuration to the 'norm-config' collection. See files in the samples folder for examples
 
-### Roxy mVC
-The meat and potatoes of Roxy, the mVC (with a de-emphasis on m) is a light-weight MVC framework fashioned after Ruby on Rails and CakePHP. It relies heavily on **Convention over Configuration**.
+If you just want to test Norm from QConsole against a test database then you can instead use the embedded Roxy app to deploy a new DB and app server:-
 
-### Roxy Unit Tester
-What good is your code if it doesn't work? Testing is paramount to the development process. The Roxy Unit Tester tests XQuery with XQuery. Write your tests in XQuery and run them from the UI or from the command line. Roxy Unit Tester produces JUnit XML output so you can use it with your favorite continuous testing tool.
+- Edit /src/app/config/config.xqy and check the username, password, and port numbers in use. Edit as necessary.
+- From a terminal in the main norm directory execute ./ml local bootstrap followed by ./ml local deploy modules
+- From a QConsole attached to the new norm-content database, open the QConsole file in norm.xml in the main norm directory. This shows working examples and useful scripts.
+- Load in sample content using the scripts in data/*.xml (These are actually XQuery files that load the data with the correct collections and URIs) 
 
 ## Requirements
-* MarkLogic:
-  * MarkLogic 4.x - You need the **Docs** appserver running on port 8000 - this port can be overridden in build.properties
-  * MarkLogic 5.x - You need the **Manage** appserver running on port 8002 - this port can be overridden in build.properties
-  * MarkLogic 6.x - You need the **Manage** appserver running on port 8002 - this port can be overridden in build.properties
+* MarkLogic 6.0 or above
 * [Ruby](http://www.ruby-lang.org/en/) - Required for Roxy Deployer only.
 * [Java (jdk)](http://www.oracle.com/technetwork/java/javase/downloads/index.html) - Only if you wish to run the Roxy Deployer [XQSync](http://developer.marklogic.com/code/xqsync, XQSync) or [RecordLoader](http://developer.marklogic.com/code/recordloader) commands.
-* [Git](http://git-scm.com/downloads) - Required to create a new project using "ml new".
-
-## Getting Started (Quick Version)
-This section describes the quickest way to get started using Roxy.
-
-### Assumptions
-* You already have one or more MarkLogic Servers running somewhere that you can access from your computer. If not, get it [here](http://community.marklogic.com/products).* 
-* You know the admin logon to your MarkLogic Server(s)
-
-### Download Roxy
-`> git clone git://github.com/marklogic/roxy.git`
-
-### Configure your application
-1. Open a command prompt in the root folder of Roxy
-2. Run ml init to create sample configuration files
-
-  `> ml init app-name`
-3. Modify deploy/build.properties with your application's settings.
-
-  <code>
-  \# Username to authenticate to ML  
-  user=your-ml-admin-username  
-  \# password for ML authentication  
-  password=your-ml-admin-password  
-  \# the authentication type for the appserver (digest|basic|application-level)  
-  authentication-method=application-level  
-  \# the default user to authenticate with. defaults to nobody  
-  default-user=nobody  
-  \# the root path of your modules. Use this to override the modules db and use your filesystem location  
-  modules-root=/the/path/to/your/files/on/the/filesystem  
-  \# either 'filesystem' or 'name of db'  
-  app-modules-db=filesystem  
-  \# Specify the server(s) you wish to deploy to here. This tutorial assumes you are using localhost.  
-  local-server=localhost  
-  \#dev-server=  
-  \#cert-server=  
-  \#prod-server=  
-  </code>
-
-### Configure MarkLogic Server
-*This step is only needed when database configurations have changed or on a fresh install. In most cases you will not need to restart your server.*
-
-1. Open a command prompt in the root folder of Roxy  
-  *If your server is not configured as local-server in build.properties then substitute your environment here ( local | dev | prod )*
-2. `> ml local bootstrap`
-3. Depending on what, if anything, you changed you may need to restart MarkLogic in order to proceed. If you see output telling you to restart...  
-  `> ml local restart`
-
-### Deploying Code
-*This step describes how to deploy your Roxy application into your MarkLogic Server modules database. If you have elected to run your code locally out of the filesystem you do not need to do this.*
-
-1. Open a command prompt in the root folder of Roxy
-2. `> ml local deploy modules`
-3. Open your favorite web browser to http://localhost:port  
-  *Sub in your hostname and port from build.properties*
-
-### Congratulations
-**Congratulations!** You have Roxy running on your server. Now you need to start customizing it.
 
 ## Getting Help
-For more information run:  
-  `> ml -h`
+Email me at adam.fowler@marklogic.com
+
+## Common gotchas
+In order to execute the code requires particular indexes. Once you've created a denormalisation configuration execute the list indexes function for your configuration. An example of this
+is in the norm.xml QConsole file. Load this in to QConsole via Import Workspace to see a sample.
+
+## Supported features
+- Create or Update of a document generates a denormalisation
+- Single primary key per source in new document (not multiple primary keys yet)
+- Cases where multiple existing documents of each source (type) require generation of multiple denormalisation documents, including many multiples across all sources
+- Optional parent document (see config-direct-parent.xqy)
+- Denormalisation from both parent and child documents (see config-direct-parent.xqy)
+- Shredding single document (for ODBC view resolution) (see config-odbc-shred.xqy)
+? Shredding one document whilst merging with another document (TODO test)
+- Handles static content, text, or elements (see config-odbc-shred.xqy)
+
+## Upcoming / not yet 
+- Checking if generated content will be the same as content that already exists (thus reducing any other triggers firing)
+- Being part of a pipeline in CPF
+- Composite primary keys in the document that generates the denormalisation
+- XSLT generation of new denormalisation documents
+- Embedded XQuery / document by example templating (must be in internal format only)
+- Only supports single primary key per source being referenced in the denormalisation's URI
+? SOptional grandparent documents (and thus any ancestor docs)
+ - Cannot resolve documents as there is a dependancy on resolving parent first - will require a processing order on the XML sources themselves. Should be able to determine at runtime based on dependency tree

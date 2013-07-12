@@ -1,26 +1,6 @@
 xquery version "1.0-ml";
 (:
  : Norm the Denormaliser control library. Holds server functions to perform denormalisations via triggers.
- :
- : Cases currently handled
- : - Create or Update of a document generates a denormalisation
- : - Handles single primary key in new document (not multiple primary keys yet)
- : - Supports cases where multiple existing documents of each source (type) require generation of multiple denormalisation documents, including many multiples across all sources
- : - Supports optional parent document (see config-direct-parent.xqy)
- : - Supports both parent and child documents (see config-direct-parent.xqy)
- : ? Supports optional grandparent documents (and thus any ancestor docs)
-    - Cannot resolve documents as there is a dependancy on resolving parent first - will require a processing order on the XML sources themselves. Should be able to determine at runtime based on dependency tree
- : - Supports shredding single document (for ODBC view resolution) (see config-odbc-shred.xqy)
- : ? Supports shredding one document whilst merging with another document (TODO test)
- : - Handles static content, text, or elements (see config-odbc-shred.xqy)
- : 
- : Cases not yet handled
- : - Checking if generated content will be the same as content that already exists (thus reducing any other triggers firing)
- : - Being part of a pipeline in CPF
- : - Doesn't support composite primary keys in the document that generates the denormalisation
- : - Doesn't support XSLT generation of new denormalisation documents
- : - Doesn't support embedded XQuery / document by example templating (must be in internal format only)
- : - Only supports single primary key per source being referenced in the denormalisation's URI
 :)
 module namespace n = "http://marklogic.com/norm/main";
 
