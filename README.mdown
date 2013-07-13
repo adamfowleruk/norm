@@ -28,7 +28,7 @@ multiple are specified). ##s1:uri## will match the URI of the related source doc
 
 On an old MacBook Pro 17" from 2005 a shredding denormalisation (2 new documents generated) can be executed in 0.013 seconds. Most of this is extensive logging. 
 xdmp:log functions can be commented out in
-production systems. The code is constantly profiles to find any performance issues, and the internal generation functions are tweaked to avoid these issues. If you notice a
+production systems. The code is constantly profiled to find any performance issues, and the internal content generation functions are tweaked to avoid these issues. If you notice a
 particular problem please email sample content and configuration files to adam.fowler@marklogic.com .
 
 It should be noted that because multiple sources can be related to each other, and there may be several 1:many relationships, a single new/updated document may result in
