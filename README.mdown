@@ -25,7 +25,7 @@ must reference content from the sources, optionally restricting what is extracte
 URIs for output content can be specified using wildcards like ##s1:pk# for the primary key string value from source with id s1, or ##s1:pk:1## for the first primary key (if
 multiple are specified). ##s1:uri## will match the URI of the related source document. ##auto## will provide a random long number as a string in the URI.
 
-On an old MacBook Pro 17" from 2005 a shredding denormalisation can be executed in 0.13 seconds. Most of this is extensive logging. xdmp:log functions can be commented out in
+On an old MacBook Pro 17" from 2005 a shredding denormalisation can be executed in 0.013 seconds. Most of this is extensive logging. xdmp:log functions can be commented out in
 production systems. The code is constantly profiles to find any performance issues, and the internal generation functions are tweaked to avoid these issues. If you notice a
 particular problem please email sample content and configuration files to adam.fowler@marklogic.com .
 
