@@ -4,6 +4,30 @@ to act as the results of a search application. Scenarios supported include:-
 
 - Shredding one incoming document in to several document (Also useful for creating documents to act as fragments for ODBC views)
 - Combining multiple related documents in to a single aggregate document (E.g. from Relational documents for an Order, Order items, delivery address in to a single OrderDetails document)
+- In MarkLogic 7, generate an inferred triple document based on multiple related triple documents. (Currently limited to source documents containing one triple each)
+
+## Design
+Norm is configuration driven. This configuration is saved in multiple files, one per denormalisation target document, in the norm-config collection. 
+A single library of currently 434 lines of XQuery called lib-norm.xqy is responsible for carrying out the denormalisation work. This library also
+performs sanity checks to find any enabled denormalisations matching the given source document URI. If none match, no denormalisation is carried out.
+
+Norm also checks that all required content is present before generating a denormalisation. This is useful where you do not want an incomplete denormalisation
+in the database. Sources can be set to optional if a partial denormalisation is a valid output.
+
+Norm works by defining one or more sources. These are document collections that the content comes from, along with primary key definitions. Foreign key definitions
+are supported. Norm works out the relationships between all sources, and which source matches the provided newly added document, in order to locate related content
+in the repository that should be included in the output denormalisation. This uses element values, element attribute values and xdmp:unpath to find primary key values.
+Source content is located using element range query, element attribute range query and path range query, as required. A list of required indexes and their configuration
+can be given for a specified denormalisation configuration using the n:list-indexes-required($docuri as xs:string) function.
+
+Once related content has been found one or more output documents are generated using the provided template, uri pattern and collection list. Template elements and attributes
+must reference content from the sources, optionally restricting what is extracted using XPath. It is also possible to provide hard coded values and XML using the n:static element.
+URIs for output content can be specified using wildcards like ##s1:pk# for the primary key string value from source with id s1, or ##s1:pk:1## for the first primary key (if
+multiple are specified). ##s1:uri## will match the URI of the related source document. ##auto## will provide a random long number as a string in the URI.
+
+On an old MacBook Pro 17" from 2005 a shredding denormalisation can be executed in 0.13 seconds. Most of this is extensive logging. xdmp:log functions can be commented out in
+production systems. The code is constantly profiles to find any performance issues, and the internal generation functions are tweaked to avoid these issues. If you notice a
+particular problem please email sample content and configuration files to adam.fowler@marklogic.com .
 
 ## Installation
 Currently there is no UI. To install to a target content database:-
@@ -21,12 +45,12 @@ If you just want to test Norm from QConsole against a test database then you can
 - Load in sample content using the scripts in data/*.xml (These are actually XQuery files that load the data with the correct collections and URIs) 
 
 ## Requirements
-* MarkLogic 6.0 or above
+* MarkLogic 6.0 or above (lower if not using path range indexes)
 * [Ruby](http://www.ruby-lang.org/en/) - Required for Roxy Deployer only.
 * [Java (jdk)](http://www.oracle.com/technetwork/java/javase/downloads/index.html) - Only if you wish to run the Roxy Deployer [XQSync](http://developer.marklogic.com/code/xqsync, XQSync) or [RecordLoader](http://developer.marklogic.com/code/recordloader) commands.
 
 ## Getting Help
-Email me at adam.fowler@marklogic.com
+Email me at adam.fowler@marklogic.com also read my blog at (http://adamfowlerml.wordpress.com)
 
 ## Common gotchas
 In order to execute the code requires particular indexes. Once you've created a denormalisation configuration execute the list indexes function for your configuration. An example of this
@@ -39,15 +63,16 @@ is in the norm.xml QConsole file. Load this in to QConsole via Import Workspace 
 - Optional parent document (see config-direct-parent.xqy)
 - Denormalisation from both parent and child documents (see config-direct-parent.xqy)
 - Shredding single document (for ODBC view resolution) (see config-odbc-shred.xqy)
-? Shredding one document whilst merging with another document (TODO test)
+? Shredding one document whilst merging with another document (TODO test, should work)
 - Handles static content, text, or elements (see config-odbc-shred.xqy)
 
 ## Upcoming / not yet 
-- Checking if generated content will be the same as content that already exists (thus reducing any other triggers firing)
-- Being part of a pipeline in CPF
+- For sources with multiple candidate documents, allow all document content to be embedded rather than always generated one denormalisation per related document per new incoming content (n * m * l number of denormalisations is the default)
+/ Optional grandparent documents (and thus any ancestor docs)
+ - Cannot resolve documents as there is a dependancy on resolving parent first - will require a processing order on the XML sources themselves. Should be able to determine at runtime based on dependency tree
 - Composite primary keys in the document that generates the denormalisation
+- Support source documents where relations are within a specific child, not at the top level entity. E.g. a graph holding multiple triples, but you want to use content from just one triple as a source (ML7)
+- Checking if generated content will be the same as content that already exists (thus reducing any other triggers firing) -> May take longer than just regenerating the content
+- Being part of a pipeline in CPF
 - XSLT generation of new denormalisation documents
 - Embedded XQuery / document by example templating (must be in internal format only)
-- Only supports single primary key per source being referenced in the denormalisation's URI
-? SOptional grandparent documents (and thus any ancestor docs)
- - Cannot resolve documents as there is a dependancy on resolving parent first - will require a processing order on the XML sources themselves. Should be able to determine at runtime based on dependency tree
