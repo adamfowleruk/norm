@@ -2,9 +2,10 @@
 Norm is a MarkLogic Denormalisation helper library. A Denormalisation in MarkLogic allows you to alter the structure of multiple incoming documents and create composite documents 
 to act as the results of a search application. Scenarios supported include:-
 
+- Creating a doc with a different structure or subset of elements from a source document, perhaps including static content (E.g. <generatedby>Adam's denorm</generatedby>)
 - Shredding one incoming document in to several document (Also useful for creating documents to act as fragments for ODBC views)
-- Combining multiple related documents in to a single aggregate document (E.g. from Relational documents for an Order, Order items, delivery address in to a single OrderDetails document)
-- In MarkLogic 7, generate an inferred triple document based on multiple related triple documents. (Currently limited to source documents containing one triple each)
+- Combining multiple related documents in to a single aggregate document (E.g. for merging thin Relational documents for an Order, Order items, delivery address in to a single OrderDetails document)
+- In MarkLogic 7, generate an inferred triple graph document based on multiple related triples. (E.g. Adam's father is Cliff, Cliffs father is Harry, therefore create a triple for Adam's grandfather is Harry) (Currently limited to source documents containing one triple each) 
 
 ## Design
 Norm is configuration driven. This configuration is saved in multiple files, one per denormalisation target document, in the norm-config collection. 
@@ -29,6 +30,10 @@ On an old MacBook Pro 17" from 2005 a shredding denormalisation (2 new documents
 xdmp:log functions can be commented out in
 production systems. The code is constantly profiles to find any performance issues, and the internal generation functions are tweaked to avoid these issues. If you notice a
 particular problem please email sample content and configuration files to adam.fowler@marklogic.com .
+
+It should be noted that because multiple sources can be related to each other, and there may be several 1:many relationships, a single new/updated document may result in
+multiple denormalisation documents being created. These can sometimes be a large number. In this case you may want to run the triggers as post commit and live with the
+eventually-consistent database for the denormalised content.
 
 ## Installation
 Currently there is no UI. To install to a target content database:-
@@ -58,7 +63,7 @@ In order to execute the code requires particular indexes. Once you've created a 
 is in the norm.xml QConsole file. Load this in to QConsole via Import Workspace to see a sample.
 
 ## Supported features
-- Create or Update of a document generates a denormalisation
+- Create or Update of a document generates a denormalisation (see trigger-norm-create.xqy)
 - Single primary key per source in new document (not multiple primary keys yet)
 - Cases where multiple existing documents of each source (type) require generation of multiple denormalisation documents, including many multiples across all sources
 - Optional parent document (see config-direct-parent.xqy)
