@@ -81,6 +81,8 @@ is in the norm.xml QConsole file. Load this in to QConsole via Import Workspace 
 - Composite primary keys in the document that generates the denormalisation
 - Allow uri pattern to refer to any value with a range index in any source document
 - Allow referring directory to an XPath to insert content in template without parent element (so you can merge multiple elements in to same parent, or copy parent with attributes)
+- Check against previous media company's requirements
+- Test performance on previous media company's requirements (one for 20 denorms, one for 10000 denorms)
 - Support source documents where relation matches are within a specific child element, not at the top level entity. E.g. a graph holding multiple triples, but you want to use content from just one triple as a source (ML7)
 - Checking if generated content will be the same as content that already exists (thus reducing any other triggers firing) -> May take longer than just regenerating the content
 - Being part of a pipeline in CPF
