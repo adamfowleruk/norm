@@ -1,0 +1,9 @@
+xquery version "1.0-ml";
+
+xdmp:document-insert("/people/2.xml",
+<person>
+  <id>2</id>
+  <name>Sam Fowler</name>
+  <parentid>1</parentid>
+</person>
+,xdmp:default-permissions(),"people")

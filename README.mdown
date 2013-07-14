@@ -69,12 +69,14 @@ is in the norm.xml QConsole file. Load this in to QConsole via Import Workspace 
 - Optional parent document (see config-direct-parent.xqy)
 - Denormalisation from both parent and child documents (see config-direct-parent.xqy)
 - Shredding single document (for ODBC view resolution) (see config-odbc-shred.xqy)
-? Shredding one document whilst merging with another document (TODO test, should work)
+- Shredding one document whilst merging with another document (TODO test, should work)
 - Handles static content, text, or elements (see config-odbc-shred.xqy)
+- For sources with multiple candidate documents, allow all document content to be embedded rather than always generated one denormalisation per related document per new incoming content (n * m * l number of denormalisations is the default) - use n:source/@combine with value true
+- Support for foreign key relationship to same source as primary key (E.g. people related to other people)
+- Support for namespaces in source and generated content (Not yet for attributes with a different namespace to their parent element)
 
 ## Upcoming / not yet 
-- For sources with multiple candidate documents, allow all document content to be embedded rather than always generated one denormalisation per related document per new incoming content (n * m * l number of denormalisations is the default)
-/ Optional grandparent documents (and thus any ancestor docs)
+- Optional grandparent documents (and thus any ancestor docs)
  - Cannot resolve documents as there is a dependancy on resolving parent first - will require a processing order on the XML sources themselves. Should be able to determine at runtime based on dependency tree
 - Composite primary keys in the document that generates the denormalisation
 - Support source documents where relations are within a specific child, not at the top level entity. E.g. a graph holding multiple triples, but you want to use content from just one triple as a source (ML7)

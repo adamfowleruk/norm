@@ -1,7 +1,7 @@
 xquery version "1.0-ml";
 
 xdmp:document-insert("/series/1.xml",
-<series episode-pid="1234" pid="series1">
+<series episode-pid="1234" pid="series1" xmlns="http://marklogic.com/norm/ns/tv">
  <name>Doctor Who Series 1</name>
 </series>
 ,xdmp:default-permissions(),"series")

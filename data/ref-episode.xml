@@ -1,7 +1,7 @@
 xquery version "1.0-ml";
 
 xdmp:document-insert("/episodes/1234.xml",
-<episode pid="1234">
+<episode pid="1234" xmlns="http://marklogic.com/norm/ns/tv">
  <name>Sailor Down</name>
  <duration>44</duration>
 </episode>
