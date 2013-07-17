@@ -5,7 +5,7 @@ to act as the results of a search application. Scenarios supported include:-
 - Creating a doc with a different structure or subset of elements from a source document, perhaps including static content
  - Changing structure - Adding parent elements, renaming, changing namespace
  - Static content - E.g. &lt;generatedby&gt;Adam's denorm&lt;/generatedby&gt;
-- Shredding one incoming document in to several document
+- Shredding one incoming document in to several documents
  - A single CSV file added to MarkLogic could become many documents, one per row
  - Also useful for creating documents to act as rows for ODBC views, where a tree structure exists that would otherwise produce false positive results by index resolution
 - Combining multiple related documents in to a single aggregate document
@@ -17,7 +17,7 @@ to act as the results of a search application. Scenarios supported include:-
 
 ## Design
 Norm is configuration driven. This configuration is saved in multiple files, one per denormalisation target document, in the norm-config collection. 
-A single library of currently 434 lines of XQuery called lib-norm.xqy is responsible for carrying out the denormalisation work. This library also
+A single library of currently 629 lines of XQuery called lib-norm.xqy is responsible for carrying out the denormalisation work. This library also
 performs sanity checks to find any enabled denormalisations matching the given source document URI. If none match, no denormalisation is carried out.
 
 Norm also checks that all required content is present before generating a denormalisation. This is useful where you do not want an incomplete denormalisation
@@ -42,9 +42,10 @@ eventually-consistent database for the denormalised content.
 Currently there is no UI. To install to a target content database:-
 
 - Copy /src/app/models/lib-norm.xqy to your modules database at /app/models/lib-norm.xqy
-- Added the trigger /src/app/models/trigger-norm-create.xqy at the same folder location in the modules database
+- Add the trigger /src/app/models/trigger-norm-create.xqy at the same folder location in the modules database
 - Enabled this trigger on one or more incoming document collections, or globally (there are internal checks to ensure it works globally)
 - Add a denormalisation configuration to the 'norm-config' collection. See files in the samples folder for examples
+- Ingest your content and watch the magic happen! (Also check the error logs in case you got it wrong the first time!)
 
 If you just want to test Norm from QConsole against a test database then you can instead use the embedded Roxy app to deploy a new DB and app server:-
 
@@ -52,6 +53,7 @@ If you just want to test Norm from QConsole against a test database then you can
 - From a terminal in the main norm directory execute ./ml local bootstrap followed by ./ml local deploy modules
 - From a QConsole attached to the new norm-content database, open the QConsole file in norm.xml in the main norm directory. This shows working examples and useful scripts.
 - Load in sample content using the scripts in data/*.xml (These are actually XQuery files that load the data with the correct collections and URIs) 
+- Open the 'Run denormalisation' query in QConsole, alter the Doc URI to the one to simulate a trigger firing on, and execute the script 
 
 ## Requirements
 * MarkLogic 6.0 or above (lower if not using path range indexes)
@@ -69,7 +71,7 @@ An example of this is in the norm.xml QConsole file. Load this in to QConsole vi
 The code is constantly profiled to find any performance issues, and the internal content generation functions are tweaked to avoid these issues. If you notice a
 particular problem please fill out an issue on this GitHub project, including sample data and configuration where possible.
 
-On an old MacBook Pro 17" from 2005 a shredding denormalisation (2 new documents generated) can be executed in 0.0108 seconds. This is with minimal logging enabled.
+On an old MacBook Pro 17" from 2008 a joining denormalisation (2 new documents generated) can be executed in 0.0108 seconds. This is with minimal logging enabled.
 
 I have since tested a single denormalisation configuration that creates a number of denormalised documents from 3 input documents being combined. I have ran this with reference data
 resulting in creation of between 1 and 12 denormalised documents per input document. This appears to scale slightly better than linearly, with a total execution time formula of
@@ -79,7 +81,7 @@ Thus processing overhead is a steady 0.0079 seconds, and each denormalisation ge
 shouldn't matter what combinations of source documents, or number of sources, are used, this type of scaling should be expected each time. This type of test should be easy to 
 conduct on your own, modern hardware.
 
-Thus on an old early 2008 MacBook Pro you can generate 10000 denormalisations from a single input document in 37 seconds.
+Thus on an old early 2008 MacBook Pro you can generate 10000 denormalisations from a single input document in 37 seconds. Although I've naturally not tested this yet on my machine!
 
 ## Supported features
 - Create or Update of a document generates a denormalisation (see trigger-norm-create.xqy)
@@ -88,20 +90,20 @@ Thus on an old early 2008 MacBook Pro you can generate 10000 denormalisations fr
 - Optional parent document (see config-direct-parent.xqy)
 - Denormalisation from both parent and child documents (see config-direct-parent.xqy)
 - Shredding single document (for ODBC view resolution) (see config-odbc-shred.xqy)
-- Shredding one document whilst merging with another document (TODO test, should work)
 - Handles static content, text, or elements (see config-odbc-shred.xqy)
 - For sources with multiple candidate documents, allow all document content to be embedded rather than always generated one denormalisation per related document per new incoming content (n * m * l number of denormalisations is the default) - use n:source/@combine with value true
 - Support for foreign key relationship to same source as primary key (E.g. people related to other people)
 - Support for namespaces in source and generated content (Not yet for attributes with a different namespace to their parent element)
 - Optional grandparent documents (and thus any ancestor docs)
  - Working Now. NB There is a dependancy on resolving parent first - required a processing order on the XML sources themselves, determined at runtime based on dependency tree (via foreign keys)
-- Allow referring directory to an XPath to insert content in template without parent element (so you can merge multiple elements in to same parent, or copy parent with attributes)
 
 ## Upcoming / not yet 
-- Composite primary keys in the document that generates the denormalisation
-- Allow uri pattern to refer to any value with a range index in any source document
 - Check against previous media company's requirements
 - Test performance on previous media company's requirements (one for 20 denorms, one for 10000 denorms)
+- Composite primary keys in the document that generates the denormalisation
+- Shredding one document whilst merging with another document (TODO test, should work)
+- Allow referring directly to an XPath to insert content in template without parent element (so you can merge multiple elements in to same parent, or copy parent with attributes)
+- Allow uri pattern to refer to any value with a range index in any source document
 - Support source documents where relation matches are within a specific child element, not at the top level entity. E.g. a graph holding multiple triples, but you want to use content from just one triple as a source (ML7)
 - Shred at multiple hierarchical levels in source document (E.g. for ODBC view representating a doc with three levels in a tree structure)
 - Checking if generated content will be the same as content that already exists (thus reducing any other triggers firing) -> May take longer than just regenerating the content
