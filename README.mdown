@@ -2,10 +2,18 @@
 Norm is a MarkLogic Denormalisation helper library. A Denormalisation in MarkLogic allows you to alter the structure of multiple incoming documents and create composite documents 
 to act as the results of a search application. Scenarios supported include:-
 
-- Creating a doc with a different structure or subset of elements from a source document, perhaps including static content (E.g. <generatedby>Adam's denorm</generatedby>)
-- Shredding one incoming document in to several document (Also useful for creating documents to act as fragments for ODBC views)
-- Combining multiple related documents in to a single aggregate document (E.g. for merging thin Relational documents for an Order, Order items, delivery address in to a single OrderDetails document)
-- In MarkLogic 7, generate an inferred triple graph document based on multiple related triples. (E.g. Adam's father is Cliff, Cliffs father is Harry, therefore create a triple for Adam's grandfather is Harry) (Currently limited to source documents containing one triple each) 
+- Creating a doc with a different structure or subset of elements from a source document, perhaps including static content
+ - Changing structure - Adding parent elements, renaming, changing namespace
+ - Static content - E.g. &lt;generatedby&gt;Adam's denorm&lt;/generatedby&gt;
+- Shredding one incoming document in to several document
+ - A single CSV file added to MarkLogic could become many documents, one per row
+ - Also useful for creating documents to act as rows for ODBC views, where a tree structure exists that would otherwise produce false positive results by index resolution
+- Combining multiple related documents in to a single aggregate document
+ - E.g. for merging thin Relational documents for an Order, Order items, delivery address in to a single OrderDetails document
+ - Combining Episode, Series, Brand, and Scheduling documents in to several Programme-Availability documents
+- In MarkLogic 7, generate an inferred triple graph document based on multiple related triples.
+ - E.g. Adam's father is Cliff, Cliffs father is Harry, therefore create a triple for Adam's grandfather is Harry
+ - Currently limited to source documents containing one triple each (May be able to workaround this using the shredding feature with foreign key relationship to same document)
 
 ## Design
 Norm is configuration driven. This configuration is saved in multiple files, one per denormalisation target document, in the norm-config collection. 
@@ -25,12 +33,6 @@ Once related content has been found one or more output documents are generated u
 must reference content from the sources, optionally restricting what is extracted using XPath. It is also possible to provide hard coded values and XML using the n:static element.
 URIs for output content can be specified using wildcards like ##s1:pk# for the primary key string value from source with id s1, or ##s1:pk:1## for the first primary key (if
 multiple are specified). ##s1:uri## will match the URI of the related source document. ##auto## will provide a random long number as a string in the URI.
-
-On an old MacBook Pro 17" from 2005 a shredding denormalisation (2 new documents generated) can be executed in 0.0254 seconds. Most of this is extensive logging. 
-The same script executes in as little as 0.0064 seconds without any but fatal logging.
-xdmp:log functions can be commented out in
-production systems. The code is constantly profiled to find any performance issues, and the internal content generation functions are tweaked to avoid these issues. If you notice a
-particular problem please email sample content and configuration files to adam.fowler@marklogic.com .
 
 It should be noted that because multiple sources can be related to each other, and there may be several 1:many relationships, a single new/updated document may result in
 multiple denormalisation documents being created. These can sometimes be a large number. In this case you may want to run the triggers as post commit and live with the
@@ -62,6 +64,22 @@ Email me at adam.fowler@marklogic.com also read my blog at (http://adamfowlerml.
 ## Common gotchas
 In order to execute successfully the code requires particular indexes. Once you've created a denormalisation configuration execute the list indexes function for your configuration. 
 An example of this is in the norm.xml QConsole file. Load this in to QConsole via Import Workspace to see a sample.
+
+## Performance
+The code is constantly profiled to find any performance issues, and the internal content generation functions are tweaked to avoid these issues. If you notice a
+particular problem please fill out an issue on this GitHub project, including sample data and configuration where possible.
+
+On an old MacBook Pro 17" from 2005 a shredding denormalisation (2 new documents generated) can be executed in 0.0108 seconds. This is with minimal logging enabled.
+
+I have since tested a single denormalisation configuration that creates a number of denormalised documents from 3 input documents being combined. I have ran this with reference data
+resulting in creation of between 1 and 12 denormalised documents per input document. This appears to scale slightly better than linearly, with a total execution time formula of
+T = (0.0037 x N (number of denormalisations created per run) ) + 0.0079 seconds. 
+
+Thus processing overhead is a steady 0.0079 seconds, and each denormalisation generated takes approximately 0.0037 seconds on top of that. Given how the library has been written, it
+shouldn't matter what combinations of source documents, or number of sources, are used, this type of scaling should be expected each time. This type of test should be easy to 
+conduct on your own, modern hardware.
+
+Thus on an old early 2008 MacBook Pro you can generate 10000 denormalisations from a single input document in 37 seconds.
 
 ## Supported features
 - Create or Update of a document generates a denormalisation (see trigger-norm-create.xqy)

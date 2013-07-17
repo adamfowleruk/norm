@@ -11,14 +11,17 @@ declare function n:generate-denormalisations($docuri as xs:string) as xs:boolean
   (: Check configuration for matching collection/uri :)
   let $mycollections := xdmp:document-get-collections($docuri)
   let $norms := fn:collection("norm-config")/n:denormalisation[./n:enabled = "true" and ./n:sources/n:source/n:collection-match = $mycollections]
+  (:
   let $l := xdmp:log(fn:concat("Processing doc: ",$docuri, ", with collections: ",$mycollections, ", and denormalisations:-"))
   let $l := xdmp:log($norms)
+  :)
   let $normout :=
     for $norm in $norms
     let $changed-source := $norm/n:sources/n:source[./n:collection-match = $mycollections]
+    (:
     let $l := xdmp:log("Source referencing our new document:-")
     let $l := xdmp:log($changed-source)
-    
+    :)
     (: namespace support in paths and elements :)
     let $nsmap := map:map()
     let $nsmapput :=
@@ -43,9 +46,10 @@ declare function n:generate-denormalisations($docuri as xs:string) as xs:boolean
     let $sources :=
       for $src in $orderedsources (: $norm/n:sources/n:source :)
       let $changed-fk := $src/n:foreign-key[./@primary-entity = $changed-source/@id]
+      (:
       let $l := xdmp:log("Foreign key reference element (MUST exist to be processed):-")
       let $l := xdmp:log($changed-fk)
-      
+      :)
       
       let $foreignqueries :=
         for $fk in (:)$src/n:foreign-key:) $changed-fk (: We only care about the ones relating to the new document's source :)
@@ -58,7 +62,7 @@ declare function n:generate-denormalisations($docuri as xs:string) as xs:boolean
                   "element"
                 else
                   "element-attribute"
-        let $l := xdmp:log(fn:concat("FK type: ",$fktype))
+        (:let $l := xdmp:log(fn:concat("FK type: ",$fktype)):)
         return
           if ($fktype = "element") then
             cts:element-range-query(
@@ -141,7 +145,9 @@ declare function n:generate-denormalisations($docuri as xs:string) as xs:boolean
         return
           for $du in $docuris
           let $up := fn:concat("fn:doc(""" , $du , """)", $src/@shred)
+          (:
           let $l := xdmp:log(fn:concat("Shredding xpath: ", $up))
+          :)
           let $shreds := if ($hasshreds) then fn:count(xdmp:with-namespaces($nsarray,xdmp:unpath($up))) else 1 
           return
             if ($hasshreds) then
@@ -154,8 +160,10 @@ declare function n:generate-denormalisations($docuri as xs:string) as xs:boolean
             
         
       let $sourceinfo := <source-info>{$src}<docs>{$srcdocs}</docs></source-info>
+      (:
       let $l := xdmp:log(fn:concat("Source info (prior to processing):-"))
       let $l := xdmp:log($sourceinfo)
+      :)
       return
         $sourceinfo
         
@@ -183,11 +191,15 @@ declare function n:generate-denormalisations($docuri as xs:string) as xs:boolean
         ) (: TODO log this and why a denormalisation wasn't generated, along with source-info :)
       else
         (: TODO check for multiple docs in one or more sources and generate multiple docs accordingly :)
+        (:
         let $log := xdmp:log("SOURCES TO PROCESS:-")
         let $log := xdmp:log($sources)
+        :)
         let $combos := n:source-combinations($sources,1,map:map())
+        (:
         let $l := xdmp:log("Source processed combinations:-")
         let $l := xdmp:log($combos)
+        :)
         return
           for $c in $combos
           let $denormuri := n:generateuri($nsarray,$nsmap,$changed-source,$c/source-info,$norm/n:uri-pattern)
@@ -198,7 +210,9 @@ declare function n:generate-denormalisations($docuri as xs:string) as xs:boolean
             ) else 
               n:generate-element($nsarray,$nsmap,$changed-source,$c/source-info,$norm/n:template/n:element)
           let $l := xdmp:log(fn:concat("generated denormalisation at uri: ",$denormuri))
+          (:
           let $l := xdmp:log($denorm)
+          :)
           let $nd := map:put($normsdone,$denormuri,"done")
           return
             if ($duplicate) then 
@@ -423,7 +437,7 @@ declare function n:generateuri($nsarray as xs:string*,$nsmap as map:map,$changed
       let $pkval := n:get-primary-key-value-from-document($nsarray,$nsmap,$source/docs/uri[1],$pk) (: TODO handle multiple source docs (i.e. denormalistion should include both docs) - do not allow PJ in this scenario :)
       order by xs:integer($pk/@order) ascending
       return (
-        xdmp:log(fn:concat("replacing instances of: ", xs:string($source/n:source/@id), " with ", $pkval)),
+        (:xdmp:log(fn:concat("replacing instances of: ", xs:string($source/n:source/@id), " with ", $pkval)),:)
         if ("1" = $idx) then map:put($map,fn:concat("##",xs:string($source/n:source/@id),":pk##"), $pkval) else (),
         map:put($map,fn:concat("##",xs:string($source/n:source/@id),":pk:", $idx, "##"), $pkval )
       )
@@ -444,18 +458,20 @@ declare function n:generateuri($nsarray as xs:string*,$nsmap as map:map,$changed
   return map:get($mapout,"string")
   :)
   let $uri := n:doreplace($map,1,$uripattern)
+  (:
   let $log := xdmp:log(fn:concat("Final URI now: ",$uri))
+  :)
   return $uri
 };
 
 declare function n:doreplace($map as map:map,$index as xs:integer,$replace as xs:string) as xs:string {
   let $key := map:keys($map)[$index]
-  return (xdmp:log(fn:concat("replacing key: ",$key," with: ",map:get($map,$key))),
+  return ((:xdmp:log(fn:concat("replacing key: ",$key," with: ",map:get($map,$key))),:)
     if (fn:count(map:keys($map)) = $index) then
-    (xdmp:log("final replace"),
+    ((:xdmp:log("final replace"),:)
       fn:replace($replace,$key,map:get($map,$key)))
     else
-    (xdmp:log("not final replace"),
+    ((:xdmp:log("not final replace"),:)
       fn:replace(n:doreplace($map,$index + 1,$replace),$key,map:get($map,$key))
       )
   )
@@ -468,15 +484,17 @@ declare function n:doreplace($map as map:map,$index as xs:integer,$replace as xs
  :)
 declare function n:source-combinations($sources as element()*,$mynum as xs:integer,$map as map:map) as element()* {
   if ($mynum > fn:count($sources)) then
-    let $l := xdmp:log(fn:concat("Generating combo :-"))
-    return
+    (:let $l := xdmp:log(fn:concat("Generating combo :-"))
+    return:)
      element combo {
       for $key in map:keys($map)
       let $src := $sources[xs:integer($key)]
+      (:
       let $l := xdmp:log(fn:concat($key,"=",fn:string-join(
         (for $v in map:get($map,$key) 
         return xs:string($v)),","
       )))
+      :)
       order by xs:integer($key) ascending
       return
         element source-info {
@@ -490,9 +508,13 @@ declare function n:source-combinations($sources as element()*,$mynum as xs:integ
   else
     let $mysource := $sources[$mynum]
     let $mysize := fn:count($mysource/docs/uri)
+    (:
     let $l := xdmp:log(fn:concat("Processing source: ",$mysource/n:source/@id,", mysize = ",$mysize))
+    :)
     let $mycount := if (0 = $mysize) then 1 else $mysize
+    (:
     let $l := xdmp:log(fn:concat("Mycount = ",$mycount))
+    :)
     let $options :=
       if ($mysource/n:source/@combine = "true") then
         (: Support for multiple docs combined in a single source :)
@@ -547,14 +569,16 @@ declare function n:generate-element-content($nsarray as xs:string*,$nsmap as map
           if (fn:empty($src/docs/uri)) then () else
           :)
           if (fn:empty($uri)) then () else
+            (:
             let $l := xdmp:log("Extracting content from URI:- ")
             let $l := xdmp:log($uri)
             (: TODO check for shred reference - shredindex and shredpath :)
             return
+            :)
               (: Check that we overlap with the target xpath :)
               if (fn:empty($uri/@shredindex) or fn:not(fn:contains($normel/@source-path,$uri/@shredpath))) then
                 let $path := fn:concat("fn:doc(""" , $uri , """)", $normel/@source-path)
-                let $l := xdmp:log(fn:concat("Calling unpath on: ",$path, " for URI: ",$uri))
+                let $l := xdmp:log(fn:concat("Calling unpath on: ",$path (:), " for URI: ",$uri:)))
                 return xdmp:with-namespaces($nsarray,xdmp:unpath($path))
               else
                 (: Get parent element's content, except the matching local name :)
@@ -565,14 +589,16 @@ declare function n:generate-element-content($nsarray as xs:string*,$nsmap as map
                 (:
                 let $matchparentcontentpath := fn:concat($firstpath,"/element()")
                 :)
+                (:)
                 let $matchparentcontentpath := fn:concat($uri/@shredpath (:),"/element()":))
                 let $l := xdmp:log(fn:concat("Parent content path: ", $matchparentcontentpath))
                 let $l := xdmp:log(fn:concat("Local name to match: ", $endpath))
+                :)
                 return
                   
                     
                       let $path := fn:concat("fn:doc(""" , $uri , """)", $uri/@shredpath, "[", $uri/@shredindex,"]",$postmatch)
-                      let $l := xdmp:log(fn:concat("Calling unpath on: ",$path, " for URI: ",$uri))
+                      let $l := xdmp:log(fn:concat("Calling unpath on: ",$path  ))
                       return xdmp:with-namespaces($nsarray,xdmp:unpath($path))
                       
                
