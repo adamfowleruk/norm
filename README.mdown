@@ -26,7 +26,8 @@ must reference content from the sources, optionally restricting what is extracte
 URIs for output content can be specified using wildcards like ##s1:pk# for the primary key string value from source with id s1, or ##s1:pk:1## for the first primary key (if
 multiple are specified). ##s1:uri## will match the URI of the related source document. ##auto## will provide a random long number as a string in the URI.
 
-On an old MacBook Pro 17" from 2005 a shredding denormalisation (2 new documents generated) can be executed in 0.013 seconds. Most of this is extensive logging. 
+On an old MacBook Pro 17" from 2005 a shredding denormalisation (2 new documents generated) can be executed in 0.0254 seconds. Most of this is extensive logging. 
+The same script executes in as little as 0.0064 seconds without any but fatal logging.
 xdmp:log functions can be commented out in
 production systems. The code is constantly profiled to find any performance issues, and the internal content generation functions are tweaked to avoid these issues. If you notice a
 particular problem please email sample content and configuration files to adam.fowler@marklogic.com .
@@ -59,8 +60,8 @@ If you just want to test Norm from QConsole against a test database then you can
 Email me at adam.fowler@marklogic.com also read my blog at (http://adamfowlerml.wordpress.com)
 
 ## Common gotchas
-In order to execute the code requires particular indexes. Once you've created a denormalisation configuration execute the list indexes function for your configuration. An example of this
-is in the norm.xml QConsole file. Load this in to QConsole via Import Workspace to see a sample.
+In order to execute successfully the code requires particular indexes. Once you've created a denormalisation configuration execute the list indexes function for your configuration. 
+An example of this is in the norm.xml QConsole file. Load this in to QConsole via Import Workspace to see a sample.
 
 ## Supported features
 - Create or Update of a document generates a denormalisation (see trigger-norm-create.xqy)
@@ -74,17 +75,21 @@ is in the norm.xml QConsole file. Load this in to QConsole via Import Workspace 
 - For sources with multiple candidate documents, allow all document content to be embedded rather than always generated one denormalisation per related document per new incoming content (n * m * l number of denormalisations is the default) - use n:source/@combine with value true
 - Support for foreign key relationship to same source as primary key (E.g. people related to other people)
 - Support for namespaces in source and generated content (Not yet for attributes with a different namespace to their parent element)
+- Optional grandparent documents (and thus any ancestor docs)
+ - Working Now. NB There is a dependancy on resolving parent first - required a processing order on the XML sources themselves, determined at runtime based on dependency tree (via foreign keys)
+- Allow referring directory to an XPath to insert content in template without parent element (so you can merge multiple elements in to same parent, or copy parent with attributes)
 
 ## Upcoming / not yet 
-- Optional grandparent documents (and thus any ancestor docs)
- - Cannot resolve documents as there is a dependancy on resolving parent first - will require a processing order on the XML sources themselves. Should be able to determine at runtime based on dependency tree
 - Composite primary keys in the document that generates the denormalisation
 - Allow uri pattern to refer to any value with a range index in any source document
-- Allow referring directory to an XPath to insert content in template without parent element (so you can merge multiple elements in to same parent, or copy parent with attributes)
 - Check against previous media company's requirements
 - Test performance on previous media company's requirements (one for 20 denorms, one for 10000 denorms)
 - Support source documents where relation matches are within a specific child element, not at the top level entity. E.g. a graph holding multiple triples, but you want to use content from just one triple as a source (ML7)
+- Shred at multiple hierarchical levels in source document (E.g. for ODBC view representating a doc with three levels in a tree structure)
 - Checking if generated content will be the same as content that already exists (thus reducing any other triggers firing) -> May take longer than just regenerating the content
 - Being part of a pipeline in CPF
 - XSLT generation of new denormalisation documents
 - Embedded XQuery / document by example templating (must be in internal format only)
+
+
+

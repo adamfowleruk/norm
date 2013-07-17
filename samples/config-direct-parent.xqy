@@ -24,6 +24,13 @@ xdmp:document-insert("/admin/config/norm-test.xml",<n:denormalisation>
  </n:template>
  
  <n:sources>
+  <n:source id="s4" name="availability" root-xpath="fn:uris(""/availabilities/*"")" mode="create-update" required="true">
+   <n:collection-match>availabilities</n:collection-match>
+   <n:foreign-key primary-entity="s1" key-ns="tv" key-element="episode" key-attribute="pid"><n:ns>tv</n:ns><n:element>availability</n:element><n:attribute>episode-pid</n:attribute></n:foreign-key>
+   <n:primary-key order="1"><n:ns>tv</n:ns><n:element>start-time</n:element></n:primary-key>
+   <n:primary-key order="2"><n:ns>tv</n:ns><n:element>end-time</n:element></n:primary-key>
+
+  </n:source> 
   <n:source id="s1" name="episode" root-xpath="fn:collection(""episodes"")" mode="create-update" required="true">
    <n:collection-match>episodes</n:collection-match>
    <n:primary-key><n:ns>tv</n:ns><n:element>episode</n:element><n:attribute>pid</n:attribute></n:primary-key>
@@ -33,13 +40,6 @@ xdmp:document-insert("/admin/config/norm-test.xml",<n:denormalisation>
    <n:primary-key><n:ns>tv</n:ns><n:element>series</n:element><n:attribute>pid</n:attribute></n:primary-key>
    <n:foreign-key primary-entity="s1" key-ns="tv" key-element="episode" key-attribute="pid"><n:ns>tv</n:ns><n:element>series</n:element><n:attribute>episode-pid</n:attribute></n:foreign-key>
   </n:source>
-  <n:source id="s4" name="availability" root-xpath="fn:uris(""/availabilities/*"")" mode="create-update" required="true">
-   <n:collection-match>availabilities</n:collection-match>
-   <n:foreign-key primary-entity="s1" key-ns="tv" key-element="episode" key-attribute="pid"><n:ns>tv</n:ns><n:element>availability</n:element><n:attribute>episode-pid</n:attribute></n:foreign-key>
-   <n:primary-key order="1"><n:ns>tv</n:ns><n:element>start-time</n:element></n:primary-key>
-   <n:primary-key order="2"><n:ns>tv</n:ns><n:element>end-time</n:element></n:primary-key>
-
-  </n:source> 
  </n:sources>
 </n:denormalisation>,
 xdmp:default-permissions(),"norm-config"

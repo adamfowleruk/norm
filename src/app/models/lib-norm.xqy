@@ -29,13 +29,52 @@ declare function n:generate-denormalisations($docuri as xs:string) as xs:boolean
       for $ns in $norm/n:namespaces/n:namespace
       return
         (xs:string($ns/@prefix),$ns/text())
+        
+    (: order source by their proximity in relationships to the document that fired the denorm :)
+    let $orderedsources :=
+      n:ordered-sources-first($changed-source, $norm/n:sources/n:source)
+    (:
+    let $l :=
+      for $src at $idx in $orderedsources
+      return
+        xdmp:log(fn:concat("ORDERED SOURCE AT ", $idx," IS ",xs:string($src/@id)))
+    :)
     
     let $sources :=
-      for $src in $norm/n:sources/n:source
+      for $src in $orderedsources (: $norm/n:sources/n:source :)
       let $changed-fk := $src/n:foreign-key[./@primary-entity = $changed-source/@id]
       let $l := xdmp:log("Foreign key reference element (MUST exist to be processed):-")
       let $l := xdmp:log($changed-fk)
       
+      
+      let $foreignqueries :=
+        for $fk in (:)$src/n:foreign-key:) $changed-fk (: We only care about the ones relating to the new document's source :)
+        let $newvalue := n:get-referenced-primary-key-value($nsarray,$nsmap,$docuri,$fk)
+        let $fktype := 
+              if (fn:not(fn:empty($fk/n:path))) then
+                "xpath"
+              else
+                if (fn:empty($fk/n:attribute)) then
+                  "element"
+                else
+                  "element-attribute"
+        let $l := xdmp:log(fn:concat("FK type: ",$fktype))
+        return
+          if ($fktype = "element") then
+            cts:element-range-query(
+              fn:QName(map:get($nsmap,$fk/n:ns/text()),
+              $fk/n:element), "=",$newvalue,("collation=http://marklogic.com/collation/codepoint")
+            )
+          else if ($fktype = "xpath") then
+            cts:path-range-query($fk/n:path,"=",$newvalue,("collation=http://marklogic.com/collation/codepoint")) (: Prefixes must be same as in DB config if using Path range indexes :)
+          else
+            cts:element-attribute-range-query(
+              fn:QName(map:get($nsmap,$fk/n:ns/text()),$fk/n:element),
+              fn:QName((:map:get($nsmap,$k/n:ns/text()):) "",$fk/n:attribute),
+              "=", $newvalue,("collation=http://marklogic.com/collation/codepoint")
+            )
+      
+      (:)
       let $newvalue := 
         if ($src/@id = $changed-source/@id) then
           (: Get our primary key :)
@@ -49,29 +88,7 @@ declare function n:generate-denormalisations($docuri as xs:string) as xs:boolean
            n:get-referenced-primary-key-value($nsarray,$nsmap,$docuri,$changed-fk)
          )
       let $l := xdmp:log(fn:concat("Processing source id: ",$src/@id,", with key value: ",$newvalue))
-      
-      (:)
-      (: See what type of source we have - element or attribute or XPath :)
-      let $pktype :=
-        if (fn:not(fn:empty($changed-fk/@key-path))) then
-          "xpath"
-        else
-          if (fn:empty($changed-fk/@key-attribute)) then
-            "element"
-          else
-            "element-attribute"
-            :)
-          (:)
-      (: Get the 'primary key' value of our new document - this is referenced by other source configurations and used to find dependant existing documents :)
-      let $newvalue := 
-        if ($pktype = "element") then
-          cts:element-values(xs:QName($changed-fk/@key-element),(),("type=string","collation=http://marklogic.com/collation/codepoint"),cts:document-query($docuri))
-        else if ($pktype = "xpath") then
-          cts:values(cts:path-reference($changed-fk/@key-path),(),("collation=http://marklogic.com/collation/codepoint"),cts:document-query($docuri))
-        else
-          cts:element-attribute-values(xs:QName($changed-fk/@key-element),xs:QName($changed-fk/@key-attribute),(),("type=string","collation=http://marklogic.com/collation/codepoint"),cts:document-query($docuri) )
     :)
-    
       (: Find dependent documents :)
       let $srcdocs := 
         
@@ -81,7 +98,7 @@ declare function n:generate-denormalisations($docuri as xs:string) as xs:boolean
           if ($src/@id = $changed-source/@id) then
             $docuri
           else () , (: We do both because a source may reference itself with a foreign key relationship :)
-            let $fktype :=
+            (:let $fktype :=
               if (fn:not(fn:empty($changed-fk/n:path))) then
                 "xpath"
               else
@@ -90,7 +107,10 @@ declare function n:generate-denormalisations($docuri as xs:string) as xs:boolean
                 else
                   "element-attribute"
             let $l := xdmp:log(fn:concat("FK type: ",$fktype))
+            
             return
+            :)
+            (:)
               if ($fktype = "element") then
                 for $doc in cts:search(fn:collection($src/n:collection-match),
                   cts:element-range-query(
@@ -112,6 +132,10 @@ declare function n:generate-denormalisations($docuri as xs:string) as xs:boolean
                     "=", $newvalue,("collation=http://marklogic.com/collation/codepoint")
                   )
                 )
+                return $doc/fn:base-uri(.)
+                :)
+                if (fn:empty($foreignqueries)) then () else (: Sanity check so we don't double up on our source document when it doesn't refer to itself with foreign keys :)
+                for $doc in cts:search(fn:collection($src/n:collection-match), $foreignqueries)
                 return $doc/fn:base-uri(.)
            )
         return
@@ -256,9 +280,66 @@ declare function n:list-indexes-required($config-uri as xs:string) as element()*
 )  
 };
 
-
-
 (: ---------- INTERNAL ONLY FUNCTIONS BEYOND THIS POINT ---------- :)
+
+
+(:
+ : Returns the sources in dependency order, with the newly created document's source first
+ :)
+declare function n:ordered-sources-first($changed-source as element(n:source),$sources as element(n:source)*) as element(n:source)* {
+  (: first is primary source :)
+  let $orderedmap := map:map()
+  let $donemap := map:map()
+  let $matchedid := xs:string($changed-source/@id)
+  let $put := map:put($orderedmap, $matchedid, 1)
+  let $othersources := $sources[@id != $matchedid]
+  let $put := map:put($donemap,"done",(map:get($donemap,"done"),$matchedid))
+  let $null := n:ordered-sources($othersources,2,$orderedmap,$donemap)
+  return
+    for $src in $sources
+    order by xs:integer(map:get($orderedmap,xs:string($src/@id))) ascending
+    return $src
+};
+
+(: Processes the next most dependent source :)
+declare function n:ordered-sources($sources as element(n:source)*,$nextindex as xs:integer, $orderedmap as map:map,$donemap as map:map) {
+  (:
+  let $l := xdmp:log(fn:concat("ORDEREDSOURCES: Ordered map now: ", fn:string-join(map:keys($orderedmap),",")))
+  let $l := xdmp:log(fn:concat("ORDEREDSOURCES: Done map now: ", fn:string-join(map:get($donemap,"done"),",")))
+  
+  return
+  :)
+  if (fn:empty($sources)) then ()
+  else
+  (
+    (:)
+    (
+    for $nextsource at $idx in $sources[./n:foreign-key/@primary-entity != map:get($donemap,"done")]
+    let $matchedid := xs:string($nextsource/@id)
+    let $l := xdmp:log(fn:concat("Source ID for level: ",$nextindex," : ",$matchedid))
+    let $put := map:put($donemap,"done",(map:get($donemap,"done"),$matchedid))
+    let $put := map:put($orderedmap,$matchedid,$nextindex + $idx - 1)
+    return ()
+    ),
+    n:ordered-sources($sources[@id != map:get($donemap,"done")],fn:count(map:keys($donemap)) + 1,$orderedmap,$donemap)
+    :)
+    let $nextsource := $sources[./n:foreign-key/@primary-entity != map:get($donemap,"done")][1]
+    let $matchedid := xs:string($nextsource/@id)
+    (:let $l := xdmp:log(fn:concat("Source ID for level: ",$nextindex," : ",$matchedid)):)
+    let $put := map:put($donemap,"done",(map:get($donemap,"done"),$matchedid))
+    let $put := map:put($orderedmap,$matchedid,$nextindex)
+    return
+      let $othersources := $sources[@id != $matchedid]
+      return
+        (: Sane config check to avoid infinite loop on dependency ordering :)
+        if (fn:count($othersources) = fn:count($sources)) then
+          xdmp:log(fn:concat("FATAL: ordered-sources hasn't found a next dependant source. Remaining sources we cannot process: ", fn:string-join(
+            for $src in $othersources return xs:string($src/@id)) ))
+        else
+          n:ordered-sources($othersources,$nextindex + 1,$orderedmap,$donemap)
+  )
+};
+
 
 (:
 xdmp:with-namespaces($nsarray,
@@ -284,8 +365,8 @@ declare function n:get-document-value($nsarray as xs:string*,$nsmap as map:map,$
       :)
       xdmp:with-namespaces($nsarray,xdmp:unpath(fn:concat("fn:doc(""" , $docuri , """)", $xpath)))
     else
-    let $l := xdmp:log(fn:concat("***** NS NAME: ",xs:string($ns), " = ", map:get($nsmap,$ns)))
-    return
+    (:let $l := xdmp:log(fn:concat("***** NS NAME: ",xs:string($ns), " = ", map:get($nsmap,$ns)))
+    return:)
       cts:element-attribute-values(
         fn:QName(map:get($nsmap,$ns),$element),
         fn:QName((:map:get($nsmap,$ns):) "",$attribute),
