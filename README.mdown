@@ -105,11 +105,29 @@ Thus on an old early 2008 MacBook Pro you can generate 10000 denormalisations fr
 - Allow referring directly to an XPath to insert content in template without parent element (so you can merge multiple elements in to same parent, or copy parent with attributes)
 - Allow uri pattern to refer to any value with a range index in any source document
 - Support source documents where relation matches are within a specific child element, not at the top level entity. E.g. a graph holding multiple triples, but you want to use content from just one triple as a source (ML7)
-- Shred at multiple hierarchical levels in source document (E.g. for ODBC view representating a doc with three levels in a tree structure)
+- Shred at multiple hierarchical levels in source document (E.g. for ODBC view representing a doc with three levels in a tree structure)
 - Checking if generated content will be the same as content that already exists (thus reducing any other triggers firing) -> May take longer than just regenerating the content
 - Being part of a pipeline in CPF
 - XSLT generation of new denormalisation documents
 - Embedded XQuery / document by example templating (must be in internal format only)
 
-
+## Long term / management application features to do
+- Use Roxy and MLJS to create an admin interface and wizard for creating and editing Denormalisation configurations interactively
+- Security login as admin required
+- Phases - List denormalisations & show db name used, Describe, Add sources, define relationships, Create output template, Add output settings/activate, save
+- Add basic preview functionality
+ - On add source phase, show list of matching docs with source definition
+ - In relationship test mode, specify trigger source, then select mock incoming doc, then list and view all related docs next to each source definition, and preview sample output when ready
+- Add quick edit options to relationship test mode, so you don't have to-ing and fro-ing between edit and test pages
+- Add sanity checks when saving denormalisation. E.g. orphaned sources, output not referring to sources, URI pattern not referring to sources or auto, invalid XPaths used
+- Add helper functions for specifying elements to match. E.g. XML preview with clickable elements/attributes
+- Add indexes required preview, check exist, and auto creation capabilities on save (Without indexes present, don't allow 'enabled' to be 'true')
+- Add helper 'create output template by example' feature, with drop downs for source and indexes available
+- Script to install norm (Via Roxy bootstrap, deploy modules) then use REST functions to modify this for the target content and modules DBs, and deploy norm.xqy in to that target DB
+- Setup content database triggers within admin app
+- Install Norm automatically via REST API for target database (will require MLJS cross domain JavaScript security to work first)
+- Make content/modules db setup dynamic, selectable from drop down of REST app servers (will require MLJS cross domain JavaScript security to work first)
+- Allow creation of REST app server automatically based on selecting content database (will require MLJS cross domain JavaScript security to work first)
+- Enable denormalisation profiling by doing 10 test runs spread 4 seconds apart
+- Enable denormalisation auditing
 
