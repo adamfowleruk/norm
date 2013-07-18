@@ -98,20 +98,24 @@ Thus on an old early 2008 MacBook Pro you can generate 10000 denormalisations fr
  - Working Now. NB There is a dependancy on resolving parent first - required a processing order on the XML sources themselves, determined at runtime based on dependency tree (via foreign keys)
 
 ## Upcoming / not yet 
+- July 2013
 - Check against previous media company's requirements
-- Test performance on previous media company's requirements (one for 20 denorms, one for 10000 denorms)
-- Composite primary keys in the document that generates the denormalisation
-- Shredding one document whilst merging with another document (TODO test, should work)
-- Allow referring directly to an XPath to insert content in template without parent element (so you can merge multiple elements in to same parent, or copy parent with attributes)
-- Allow uri pattern to refer to any value with a range index in any source document
-- Support source documents where relation matches are within a specific child element, not at the top level entity. E.g. a graph holding multiple triples, but you want to use content from just one triple as a source (ML7)
-- Shred at multiple hierarchical levels in source document (E.g. for ODBC view representing a doc with three levels in a tree structure)
-- Checking if generated content will be the same as content that already exists (thus reducing any other triggers firing) -> May take longer than just regenerating the content
-- Being part of a pipeline in CPF
-- XSLT generation of new denormalisation documents
-- Embedded XQuery / document by example templating (must be in internal format only)
+ - Test performance on previous media company's requirements (one for 20 denorms, one for 10000 denorms)
+ - Composite primary keys in the document that generates the denormalisation
+ - Shredding one document whilst merging with another document (TODO test, should work)
+ - Allow referring directly to an XPath to insert content in template without parent element (so you can merge multiple elements in to same parent, or copy parent with attributes)
+ - Allow uri pattern to refer to any value with a range index in any source document
+ - Support source documents where relation matches are within a specific child element, not at the top level entity. E.g. a graph holding multiple triples, but you want to use content from just one triple as a source (ML7)
+ - Shred at multiple hierarchical levels in source document (E.g. for ODBC view representing a doc with three levels in a tree structure)
+- August 2013
+ - Allow source match clauses to be done by root element, and/or multiple collections, and/or additional cts:query persisted within configuration
+ - Being part of a pipeline in CPF
+ - XSLT generation of new denormalisation documents
+- Later 2013
+ - Checking if generated content will be the same as content that already exists (thus reducing any other triggers firing) -> May take longer than just regenerating the content
+ - Embedded XQuery / document by example templating (must be in internal format only)
 
-## Long term / management application features to do
+## Management application features todo
 - Use Roxy and MLJS to create an admin interface and wizard for creating and editing Denormalisation configurations interactively
 - Security login as admin required
 - Phases - List denormalisations & show db name used, Describe, Add sources, define relationships, Create output template, Add output settings/activate, save
