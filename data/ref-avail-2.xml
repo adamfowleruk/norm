@@ -1,7 +1,7 @@
 xquery version "1.0-ml";
 
 xdmp:document-insert("/availabilities/2.xml",
-<availability episode-pid="1234" xmlns="http://marklogic.com/norm/ns/tv">
+<availability episode-pid="1234" brand-pid="2" xmlns="http://marklogic.com/norm/ns/tv">
  <start-time>2013-07-21T21:30</start-time>
  <end-time>2013-07-21T22:13</end-time>
 </availability>

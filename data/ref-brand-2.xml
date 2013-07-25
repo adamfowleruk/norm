@@ -1,0 +1,7 @@
+xquery version "1.0-ml";
+
+xdmp:document-insert("/brand/b2.xml",
+<brand series-pid="series1" pid="b2" xmlns="http://marklogic.com/norm/ns/tv">
+ <name>BBC2</name>
+</brand>
+,xdmp:default-permissions(),"brand")

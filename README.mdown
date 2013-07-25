@@ -108,6 +108,9 @@ Thus on an old early 2008 MacBook Pro you can generate 10000 denormalisations fr
  - Support source documents where relation matches are within a specific child element, not at the top level entity. E.g. a graph holding multiple triples, but you want to use content from just one triple as a source (ML7)
  - Shred at multiple hierarchical levels in source document (E.g. for ODBC view representing a doc with three levels in a tree structure)
 - August 2013
+ - Allow building of aggregate reports as new documents that would affect the aggregate appear. E.g. end of day summaries, constantly updated trade positions
+  - Requires alerting, reverse query
+  - Requires search API to generate aggregations rather than using PK or values within a document (can be confined via cts:document-query on a set of URIs)
  - Allow source match clauses to be done by root element, and/or multiple collections, and/or additional cts:query persisted within configuration
  - Being part of a pipeline in CPF
  - XSLT generation of new denormalisation documents
